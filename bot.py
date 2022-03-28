@@ -1,11 +1,15 @@
+# HoReCa | Job in EU 
+# Was created by GAMch1k
+
+
+# Imports
 import telebot
 from assets import settings
 from assets.language_list import *
 from assets.markups_list import *
+from assets import database
 
-
-bot = telebot.TeleBot(settings.TOKEN)
-
+bot = telebot.TeleBot(settings.TOKEN)   # Initializing bot
 
 @bot.message_handler(commands=['start'])
 def welcome(message):
@@ -22,10 +26,14 @@ def choose_lang(message):
 @bot.message_handler(content_types=['text'])
 def choose_lang_check(message):
     if message.text == 'Українська':
-        print('ua')
+        database.new_user(message.chat.id, 'ua')
     elif message.text == 'English':
-        print('en')
+        database.new_user(message.chat.id, 'en')
     elif message.text == 'Русский':
-        print('ru')
+        database.new_user(message.chat.id, 'ru')
 
-bot.polling(none_stop=True, timeout=123)
+while True:
+    try:
+        bot.polling(none_stop=True, timeout=123)
+    except:
+        continue
