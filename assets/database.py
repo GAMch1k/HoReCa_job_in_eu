@@ -8,6 +8,46 @@ import sqlite3
 db = sqlite3.connect('assets/database/horeca.db', check_same_thread=False)
 
 
+def new_post(user_id, country):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+
+        # Adding new post to the database
+        cur.execute(f'''INSERT INTO "posts" (
+            "creator_id",
+            "country",
+            "mods_approved"
+        ) VALUES (
+            {user_id},
+            {country},
+            {False}
+        )''')
+
+        db.commit()
+
+    except sqlite3.Error as er:
+        print('NEW POST CREATION ERROR')
+        print(er)
+    print_all_posts()
+
+
+def change_user_language(user_id, language):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+
+        # changing language
+        cur.execute(f'''UPDATE "users" SET "lang" = "{language}" WHERE "user_id" = {user_id}''')
+
+        db.commit()
+
+    except sqlite3.Error as er:
+        print('NEW USER CREATION ERROR')
+        print(er)
+    print_all_users()
+
+
 def new_user(user_id, language, is_admin=False):
     try:
         # Creating cursor
@@ -26,12 +66,33 @@ def new_user(user_id, language, is_admin=False):
         print('NEW USER CREATION ERROR')
         print(er)
     print_all_users()
-    
+
+
+def get_user_lang(user_id):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        if id:
+            # Getting data
+            cur.execute(f'''SELECT "lang" from "users" WHERE "user_id" = {user_id}''')
+            return cur.fetchall()[0][0]
+
+    except sqlite3.Error as er:
+        print('GET USER LANGUAGE ERROR')
+        print(er)
+
 
 # Just print all users
 def print_all_users():
     cur = db.cursor()
-    cur.execute('SELECT * FROM users')
+    cur.execute('SELECT * FROM "users"')
+    print(cur.fetchall())
+
+
+# Just print all posts
+def print_all_posts():
+    cur = db.cursor()
+    cur.execute('SELECT * FROM "posts"')
     print(cur.fetchall())
 
 
