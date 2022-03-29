@@ -2,6 +2,7 @@
 
 # Imports
 import sqlite3
+from assets import functions
 
 
 # Creating connection to database
@@ -15,12 +16,12 @@ def new_post(user_id, country):
 
         # Adding new post to the database
         cur.execute(f'''INSERT INTO "posts" (
-            "creator_id",
-            "country",
-            "mods_approved"
+            creator_id,
+            country,
+            mods_approved
         ) VALUES (
             {user_id},
-            {country},
+            "{country}",
             {False}
         )''')
 
@@ -43,9 +44,24 @@ def change_user_language(user_id, language):
         db.commit()
 
     except sqlite3.Error as er:
-        print('NEW USER CREATION ERROR')
+        print('CHANGE USER LANGUAGE ERROR')
         print(er)
     print_all_users()
+
+
+def update_post_value(user_id, value, data):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        
+        # updating last post data 
+        cur.execute(f'''UPDATE "posts" SET "{value}" = {functions.data_beautify_bd(data)} WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
+
+        db.commit()
+
+    except sqlite3.Error as er:
+        print('UPDATE POST DATA ERROR')
+        print(er)
 
 
 def new_user(user_id, language, is_admin=False):

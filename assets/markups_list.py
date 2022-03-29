@@ -8,6 +8,9 @@ from telebot import types
 from assets.language_list import *
 
 
+empty = types.ReplyKeyboardRemove()
+
+
 start_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 start_btn = types.KeyboardButton('Старт / Start')
 start_markup.add(start_btn)

@@ -4,7 +4,6 @@
 
 
 def check_lang(lang):
-    print(lang)
     if (lang == 'ua'): return 0
     if (lang == 'en'): return 1
     return 2
@@ -97,4 +96,10 @@ callbacks_list = [
     'romania', 'slovakia', 'slovenia', 'finland',
     'france', 'croatia', 'czech_republic', 'switzerland',
     'sweden', 'estonia'
+]
+
+choose_city = [
+    '',
+    '',
+    'Введите название города:'
 ]
