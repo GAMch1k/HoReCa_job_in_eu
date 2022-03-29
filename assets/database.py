@@ -64,8 +64,6 @@ def update_post_value(user_id, value, data):
     except sqlite3.Error as er:
         print('UPDATE POST DATA ERROR')
         print(er)
-    
-    print_all_posts()
 
 
 def is_post_editing(user_id):
@@ -73,13 +71,29 @@ def is_post_editing(user_id):
         # Creating cursor
         cur = db.cursor()
         
-        # updating post data 
+        # getting post data 
         cur.execute(f'''SELECT "editing" from "posts" WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
 
         return cur.fetchall()[0][0]
 
     except sqlite3.Error as er:
         print('GETTING EDITING POST DATA ERROR')
+        print(er)
+
+
+# Getting users last post id
+def get_post_id(user_id):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        
+        # getting post data 
+        cur.execute(f'''SELECT "id" from "posts" WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
+
+        return cur.fetchall()[0][0]
+
+    except sqlite3.Error as er:
+        print('GETTING POST ID ERROR')
         print(er)
 
 
@@ -153,7 +167,6 @@ def init():
     "requirements" CHAR(300),
     "job_conditions" CHAR(300),
     "contact_info" CHAR(300),
-    "image_id" INTEGER,
     "mods_approved" BOOLEAN NOT NULL,
     "editing" BOOLEAN NOT NULL
     )''')

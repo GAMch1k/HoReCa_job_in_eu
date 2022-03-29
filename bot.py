@@ -143,11 +143,25 @@ def set_contact_info(message):
         if database.is_post_editing(message.chat.id):
             print('EDITING POST!')
         else:
-            send = bot.send_message(message.chat.id, requirements_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, choose_lang_check)
+            send = bot.send_message(message.chat.id, send_photo_lang[check_lang(database.get_user_lang(message.chat.id))])
+            bot.register_next_step_handler(send, download_photo)
 
 
-# Infinity loop fixing crush
+@bot.message_handler(content_types=['photo'])
+def download_photo(message):
+    try:
+        fileID = message.photo[-1].file_id
+        file_info = bot.get_file(fileID)
+        downloaded_file = bot.download_file(file_info.file_path)
+
+        with open(f'assets/images/{database.get_post_id(message.chat.id)}.jpg', 'wb') as f:
+            f.write(downloaded_file)
+    except:
+        send = bot.send_message(message.chat.id, requirements_lang[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, download_photo)
+
+
+# Infinity loop which can fix crush
 # while True:
 #     try:
 #         bot.polling(none_stop=True, timeout=123)
