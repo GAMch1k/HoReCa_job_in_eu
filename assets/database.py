@@ -18,10 +18,12 @@ def new_post(user_id, country):
         cur.execute(f'''INSERT INTO "posts" (
             creator_id,
             country,
-            mods_approved
+            mods_approved,
+            editing
         ) VALUES (
             {user_id},
             "{country}",
+            {False},
             {False}
         )''')
 
@@ -61,6 +63,23 @@ def update_post_value(user_id, value, data):
 
     except sqlite3.Error as er:
         print('UPDATE POST DATA ERROR')
+        print(er)
+    
+    print_all_posts()
+
+
+def is_post_editing(user_id):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        
+        # updating post data 
+        cur.execute(f'''SELECT "editing" from "posts" WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
+
+        return cur.fetchall()[0][0]
+
+    except sqlite3.Error as er:
+        print('GETTING EDITING POST DATA ERROR')
         print(er)
 
 
@@ -130,10 +149,13 @@ def init():
     "institution_type" CHAR(50),
     "institution_name" CHAR(80),
     "job_name" CHAR(50),
-    "duties" CHAR(700),
+    "duties" CHAR(300),
+    "requirements" CHAR(300),
+    "job_conditions" CHAR(300),
     "contact_info" CHAR(300),
     "image_id" INTEGER,
-    "mods_approved" BOOLEAN NOT NULL
+    "mods_approved" BOOLEAN NOT NULL,
+    "editing" BOOLEAN NOT NULL
     )''')
     db.commit()
 
