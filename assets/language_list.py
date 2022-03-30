@@ -307,9 +307,9 @@ manu_share_chanel = [
 ]
 
 menu_support = [
-    '󰠁 Тех.підтримка',
+    '󰠁 Тех. Підтримка',
     '󰠁 Help',
-    '󰠁 Тех.поддержка'
+    '󰠁 Тех. Поддержка'
 ]
 
 send_to_the_moderators_lang = [
@@ -331,4 +331,34 @@ post_confirmed_message = [
     '✅ Ваш пост успішно пройшов модерацію, був схвалений та розміщений на каналі',
     '✅ Your advertisement has passed the moderation successfully. The advert has appeared on our Telegram channel.',
     '✅ Ваш пост успешно прошел модерацию, был одобрен и размещен на канале'
+]
+
+clearing_all_lang = [
+    'Видаляемо',
+    'Reseting',
+    'Сбрасываем'
+]
+
+share_chanel_lang = [
+'''
+Розшарити канал
+''',
+'''
+Share chanel
+''',
+'''
+Поделится каналом
+'''
+]
+
+tech_support_lang = [
+'''
+Тех пiдтримка
+''',
+'''
+Tech support
+''',
+'''
+Тех поддержка
+'''
 ]

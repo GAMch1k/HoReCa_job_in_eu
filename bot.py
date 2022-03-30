@@ -10,6 +10,7 @@ from assets.language_list import *
 from assets.markups_list import *
 from assets import database
 import cv2
+import os
 
 
 bot = telebot.TeleBot(settings.TOKEN)   # Initializing bot
@@ -64,9 +65,8 @@ def callback_query(call):
         print(id)
         bot.send_message(
             database.get_user_id_by_post_id(id),
-            post_confirmed_message[check_lang(database.get_user_lang(call.from_user.id))],
-            reply_markup=get_main_menu_markup(database.get_user_lang(call.from_user.id))
-        )
+            post_confirmed_message[check_lang(database.get_user_lang(call.from_user.id))])
+        
         msg_id = database.get_post_data(0, 'mods_chat_id', id)
         # bot.forward_message(FORWARD_TO, MODERATORS_CHANEL, msg_id)
         bot.copy_message(FORWARD_TO, MODERATORS_CHANEL, msg_id, parse_mode='html')
@@ -74,17 +74,6 @@ def callback_query(call):
         bot.answer_callback_query(call.id, "✅ Одобрено")
     except Exception as e:
         print(e)
-        print(' ')
-        print(' ')
-        print(' ')
-        print(' ')
-        print(' ')
-        print(' ')
-        print(' ')
-        print(' ')
-
-        print(' ')
-        print(' ')
 
         if call.data:
             database.new_post(call.from_user.id, call.data)
@@ -320,7 +309,10 @@ def editing_post(message):
             if message.text == i:
                 _not_found = False
                 
-                send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_main_menu_markup(database.get_user_lang(message.chat.id)))
+                img_id = database.get_post_id(message.chat.id)
+                os.remove(f'assets/images/{img_id}.jpg')
+                database.delete_last_users_post(message.chat.id)
+                send = bot.send_message(message.chat.id, clearing_all_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_main_menu_markup(database.get_user_lang(message.chat.id)))
                 bot.register_next_step_handler(send, main_menu)
         for i in edit_accept:
             if message.text == i:
@@ -362,6 +354,22 @@ def editing_post(message):
 @bot.message_handler(content_types=['text'])
 def main_menu(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
+    if(message.text != ''):
+        _not_found = True
+        for i in menu_create_vacation:
+            if message.text == i:
+                _not_found = False
+                bot.send_message(message.chat.id, what_need_to_do[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_countrees_markup(database.get_user_lang(message.chat.id)))
+        for i in manu_share_chanel:
+            if message.text == i:
+                _not_found = False
+                send = bot.send_message(message.chat.id, share_chanel_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, main_menu)
+        for i in menu_support:
+            if message.text == i:
+                _not_found = False
+                send = bot.send_message(message.chat.id, tech_support_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, main_menu)
 
 
 # Infinity loop which can fix crush

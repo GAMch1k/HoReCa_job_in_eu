@@ -32,7 +32,6 @@ def new_post(user_id, country):
     except sqlite3.Error as er:
         print('NEW POST CREATION ERROR')
         print(er)
-    print_all_posts()
 
 
 def change_user_language(user_id, language):
@@ -48,7 +47,6 @@ def change_user_language(user_id, language):
     except sqlite3.Error as er:
         print('CHANGE USER LANGUAGE ERROR')
         print(er)
-    print_all_users()
 
 
 def get_post_data(user_id, value, post_id=None):
@@ -90,6 +88,21 @@ def update_post_value(user_id, value, data):
 
     except sqlite3.Error as er:
         print('UPDATE POST DATA ERROR')
+        print(er)
+
+
+def delete_last_users_post(user_id):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        
+        # updating last post data 
+        cur.execute(f'''DELETE FROM "posts" WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
+
+        db.commit()
+
+    except sqlite3.Error as er:
+        print('DELETE LAST POST DATA ERROR')
         print(er)
 
 
@@ -157,7 +170,6 @@ def new_user(user_id, language, is_admin=False):
     except sqlite3.Error as er:
         print('NEW USER CREATION ERROR')
         print(er)
-    print_all_users()
 
 
 def get_user_lang(user_id):
