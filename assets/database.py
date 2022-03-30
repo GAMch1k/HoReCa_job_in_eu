@@ -51,6 +51,20 @@ def change_user_language(user_id, language):
     print_all_users()
 
 
+def get_post_data(user_id, value):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+    
+        # Getting data
+        cur.execute(f'''SELECT "{value}" from "posts" WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
+        return cur.fetchall()[0][0]
+
+    except sqlite3.Error as er:
+        print('GET USER LANGUAGE ERROR')
+        print(er)
+
+
 def update_post_value(user_id, value, data):
     try:
         # Creating cursor

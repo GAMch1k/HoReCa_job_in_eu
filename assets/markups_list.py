@@ -29,10 +29,10 @@ def get_countrees_markup(lang):
     for i in range(0, len(countrees_list)-1, 2):
         countrees_markup.row(
             types.InlineKeyboardButton(text=
-                countrees_list[i][lang], callback_data=callbacks_list[i]
+                f'{countrees_flags[i]} {countrees_list[i][lang]}', callback_data=callbacks_list[i]
             ),
             types.InlineKeyboardButton(text=
-                countrees_list[i+1][lang], callback_data=callbacks_list[i+1]
+                f'{countrees_flags[i+1]} {countrees_list[i+1][lang]}', callback_data=callbacks_list[i+1]
             )
         )
     return countrees_markup
