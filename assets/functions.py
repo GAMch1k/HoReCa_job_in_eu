@@ -9,12 +9,53 @@ def data_beautify_bd(data):
     return f'{data}'
 
 
-def get_full_post(usr_id):
+def get_full_post(usr_id, lang):
     _country = db.get_post_data(usr_id, 'country')
-    _city = db.get_post_data(usr_id, 'city')
+    _city = db.get_post_data(usr_id, 'city').title().replace(' ', '_')
 
-    _post = f'''
-{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))]}, #{_city.title()}
+    if lang == 0:  # ua
+        return f'''
+{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
+{db.get_post_data(usr_id, 'institution_type')}, {db.get_post_data(usr_id, 'institution_name')}
+
+》<b>{db.get_post_data(usr_id, 'job_name').title()}</b>
+
+Обов'язки працівника:
+{db.get_post_data(usr_id, 'duties')}
+
+Вимоги до кандидата:
+{db.get_post_data(usr_id, 'requirements')}
+
+Умови роботи:
+{db.get_post_data(usr_id, 'job_conditions')}
+
+Контактні дані:
+{db.get_post_data(usr_id, 'contact_info')}
+'''
+
+    if lang == 1:  # en
+        return f'''
+{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
+{db.get_post_data(usr_id, 'institution_type')}, {db.get_post_data(usr_id, 'institution_name')}
+
+》<b>{db.get_post_data(usr_id, 'job_name').title()}</b>
+
+Responsibilities of the incumbent:
+{db.get_post_data(usr_id, 'duties')}
+
+Requirements for a job candidate:
+{db.get_post_data(usr_id, 'requirements')}
+
+Working conditions:
+{db.get_post_data(usr_id, 'job_conditions')}
+
+Contact information:
+{db.get_post_data(usr_id, 'contact_info')}
+'''
+
+    if lang == 2:  # ru
+        return f'''
+{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
 {db.get_post_data(usr_id, 'institution_type')}, {db.get_post_data(usr_id, 'institution_name')}
 
 》<b>{db.get_post_data(usr_id, 'job_name').title()}</b>
@@ -30,8 +71,4 @@ def get_full_post(usr_id):
 
 Контактные данные:
 {db.get_post_data(usr_id, 'contact_info')}
-
 '''
-    return _post
-
-# print(get_full_post(532666364))

@@ -36,3 +36,48 @@ def get_countrees_markup(lang):
             )
         )
     return countrees_markup
+
+
+def get_editing_markup(lang):
+    lang = check_lang(lang)
+
+    edit_markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    edit_markup.row(
+        types.KeyboardButton(edit_info_company[lang])
+    )
+    edit_markup.row(
+        types.KeyboardButton(edit_vacation[lang]),
+        types.KeyboardButton(edit_duties[lang])
+    )
+    edit_markup.row(
+        types.KeyboardButton(edit_requirments[lang]),
+        types.KeyboardButton(edit_conditions[lang])
+    )
+    edit_markup.row(
+        types.KeyboardButton(edit_photo_logo[lang]),
+        types.KeyboardButton(edit_contacts[lang])
+    )
+    edit_markup.row(
+        types.KeyboardButton(edit_empty_vacation[lang])
+    )
+    edit_markup.row(
+        types.KeyboardButton(edit_accept[lang])
+    )
+    return edit_markup
+
+
+def get_main_menu_markup(lang):
+    lang = check_lang(lang)
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.row(types.KeyboardButton(menu_create_vacation[lang]))
+    markup.row(types.KeyboardButton(manu_share_chanel[lang]))
+    markup.row(types.KeyboardButton(menu_support[lang]))
+    
+    return markup
+
+
+def generate_accept(post_id):
+    accept = types.InlineKeyboardMarkup()
+    accept.row(types.InlineKeyboardButton(text='✅ Одобрить', callback_data=f'{post_id}'))
+    return accept

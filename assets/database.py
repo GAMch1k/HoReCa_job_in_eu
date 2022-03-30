@@ -51,18 +51,31 @@ def change_user_language(user_id, language):
     print_all_users()
 
 
-def get_post_data(user_id, value):
-    try:
-        # Creating cursor
-        cur = db.cursor()
-    
-        # Getting data
-        cur.execute(f'''SELECT "{value}" from "posts" WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
-        return cur.fetchall()[0][0]
+def get_post_data(user_id, value, post_id=None):
+    if post_id == None:
+        try:
+            # Creating cursor
+            cur = db.cursor()
+        
+            # Getting data
+            cur.execute(f'''SELECT "{value}" from "posts" WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
+            return cur.fetchall()[0][0]
 
-    except sqlite3.Error as er:
-        print('GET USER LANGUAGE ERROR')
-        print(er)
+        except sqlite3.Error as er:
+            print('GET POST DATA ERROR')
+            print(er)
+    else:
+        try:
+            # Creating cursor
+            cur = db.cursor()
+        
+            # Getting data
+            cur.execute(f'''SELECT "{value}" from "posts" WHERE "id" = {post_id}''')
+            return cur.fetchall()[0][0]
+
+        except sqlite3.Error as er:
+            print('GET POST DATA ERROR')
+            print(er)
 
 
 def update_post_value(user_id, value, data):
@@ -103,6 +116,22 @@ def get_post_id(user_id):
         
         # getting post data 
         cur.execute(f'''SELECT "id" from "posts" WHERE "creator_id" = {user_id} AND "id" = (SELECT max(id) FROM "posts" WHERE "creator_id" = {user_id})''')
+
+        return cur.fetchall()[0][0]
+
+    except sqlite3.Error as er:
+        print('GETTING POST ID ERROR')
+        print(er)
+
+
+# Getting post id
+def get_user_id_by_post_id(post_id):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        
+        # getting post data 
+        cur.execute(f'''SELECT "creator_id" from "posts" WHERE "id" = {post_id}''')
 
         return cur.fetchall()[0][0]
 
@@ -172,17 +201,18 @@ def init():
     cur.execute('''CREATE TABLE if not exists "posts" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "creator_id" INTEGER NOT NULL,
-    "country" CHAR(50),
-    "city" CHAR(50),
-    "institution_type" CHAR(50),
-    "institution_name" CHAR(80),
-    "job_name" CHAR(50),
-    "duties" CHAR(300),
-    "requirements" CHAR(300),
-    "job_conditions" CHAR(300),
-    "contact_info" CHAR(300),
+    "country" CHAR(30),
+    "city" CHAR(30),
+    "institution_type" CHAR(30),
+    "institution_name" CHAR(40),
+    "job_name" CHAR(30),
+    "duties" CHAR(250),
+    "requirements" CHAR(250),
+    "job_conditions" CHAR(250),
+    "contact_info" CHAR(100),
     "mods_approved" BOOLEAN NOT NULL,
-    "editing" BOOLEAN NOT NULL
+    "editing" BOOLEAN NOT NULL,
+    "mods_chat_id" INTEGER
     )''')
     db.commit()
 
