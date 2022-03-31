@@ -3,6 +3,8 @@
 # Imports
 import sqlite3
 from assets import functions
+from xlsxwriter.workbook import Workbook
+# import pandas as pd
 
 
 # Creating connection to database
@@ -32,6 +34,27 @@ def new_post(user_id, country):
     except sqlite3.Error as er:
         print('NEW POST CREATION ERROR')
         print(er)
+
+
+def dump_to_excel():
+    try:
+        workbook = Workbook('assets/database/excel_db.xlsx')
+        worksheet = workbook.add_worksheet()
+
+        # Creating cursor
+        cur = db.cursor()
+        # Getting data
+        cur.execute('SELECT * FROM "users"')
+        mysel = cur.execute('SELECT * FROM "users"')
+
+        for i, row in enumerate(mysel):
+            for j, value in enumerate(row):
+                worksheet.write(i, j, value)
+        workbook.close()
+
+    except Exception as e:
+        print(e)
+        print('DATABASE DUMP TO EXCEL ERROR')
 
 
 def change_user_language(user_id, language):
@@ -162,13 +185,44 @@ def new_user(user_id, language, is_admin=False):
         cur.execute(f'''INSERT INTO "users" VALUES (
             {user_id},
             "{language}",
-            {is_admin}
+            {is_admin},
+            "{''}"
         )''')
 
         db.commit()
 
     except sqlite3.Error as er:
         print('NEW USER CREATION ERROR')
+        print(er)
+
+
+def update_user_value(user_id, value, data):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        
+        # updating user data 
+        cur.execute(f'''UPDATE "users" SET "{value}" = "{data}" WHERE "user_id" = {user_id}''')
+
+        db.commit()
+
+    except sqlite3.Error as er:
+        print('UPDATE USER DATA ERROR')
+        print(er)
+
+
+def set_user_admin(user_id, is_admin):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        
+        # updating last post data 
+        cur.execute(f'''UPDATE "users" SET "is_admin" = {is_admin} WHERE "user_id" = {user_id}''')
+
+        db.commit()
+
+    except sqlite3.Error as er:
+        print('SET USER ADMIN ERROR')
         print(er)
 
 
@@ -183,6 +237,20 @@ def get_user_lang(user_id):
 
     except sqlite3.Error as er:
         print('GET USER LANGUAGE ERROR')
+        print(er)
+
+
+def is_user_admin(user_id):
+    try:
+        # Creating cursor
+        cur = db.cursor()
+
+        # Getting data
+        cur.execute(f'''SELECT "is_admin" from "users" WHERE "user_id" = {user_id}''')
+        return cur.fetchall()[0][0]
+
+    except sqlite3.Error as er:
+        print('GETING ADMIN STATE ERROR')
         print(er)
 
 
@@ -208,7 +276,8 @@ def init():
     cur.execute('''CREATE TABLE if not exists "users" (
     "user_id" INTEGER PRIMARY KEY,
     "lang" CHAR(2) NOT NULL,
-    "is_admin" BOOLEAN NOT NULL)
+    "is_admin" BOOLEAN NOT NULL,
+    "contact_info" CHAR(100))
     ''')
     cur.execute('''CREATE TABLE if not exists "posts" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -60,9 +60,7 @@ def choose_lang_check(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     try:
-        print('int')
         id = int(call.data)
-        print(id)
         bot.send_message(
             database.get_user_id_by_post_id(id),
             post_confirmed_message[check_lang(database.get_user_lang(call.from_user.id))])
@@ -217,6 +215,7 @@ def set_contact_info(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
     if(message.text != ''):
         database.update_post_value(message.chat.id, 'contact_info', message.text)
+        database.update_user_value(message.chat.id, 'contact_info', message.text)
         if database.is_post_editing(message.chat.id):
             img_id = database.get_post_id(message.chat.id)
             bot.send_photo(message.chat.id,
@@ -312,7 +311,7 @@ def editing_post(message):
                 img_id = database.get_post_id(message.chat.id)
                 os.remove(f'assets/images/{img_id}.jpg')
                 database.delete_last_users_post(message.chat.id)
-                send = bot.send_message(message.chat.id, clearing_all_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_main_menu_markup(database.get_user_lang(message.chat.id)))
+                send = bot.send_message(message.chat.id, clearing_all_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_main_menu_markup(database.get_user_lang(message.chat.id), database.is_user_admin(message.chat.id)))
                 bot.register_next_step_handler(send, main_menu)
         for i in edit_accept:
             if message.text == i:
@@ -323,9 +322,8 @@ def editing_post(message):
                     caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
                     parse_mode='html',
                     reply_markup=generate_accept(img_id))
-                print(mod.message_id)
                 database.update_post_value(message.chat.id, 'mods_chat_id', mod.message_id)
-                send = bot.send_message(message.chat.id, send_to_the_moderators_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_main_menu_markup(database.get_user_lang(message.chat.id)))
+                send = bot.send_message(message.chat.id, send_to_the_moderators_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_main_menu_markup(database.get_user_lang(message.chat.id), database.is_user_admin(message.chat.id)))
                 bot.register_next_step_handler(send, main_menu)
         
         if _not_found:
@@ -359,6 +357,7 @@ def main_menu(message):
         for i in menu_create_vacation:
             if message.text == i:
                 _not_found = False
+                bot.send_message(message.chat.id, starting_new_vacation[check_lang(database.get_user_lang(message.chat.id))], reply_markup=empty)
                 bot.send_message(message.chat.id, what_need_to_do[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_countrees_markup(database.get_user_lang(message.chat.id)))
         for i in manu_share_chanel:
             if message.text == i:
@@ -370,6 +369,18 @@ def main_menu(message):
                 _not_found = False
                 send = bot.send_message(message.chat.id, tech_support_lang[check_lang(database.get_user_lang(message.chat.id))])
                 bot.register_next_step_handler(send, main_menu)
+        for i in admin_damp:
+            if message.text == i and _not_found:
+                _not_found = False
+                database.dump_to_excel()
+                f = open('assets/database/excel_db.xlsx', 'rb')
+                send = bot.send_document(message.chat.id, f)
+                bot.register_next_step_handler(send, main_menu)
+        for i in admin_mail:
+            if message.text == i:
+                _not_found = False
+        if _not_found:
+            pass
 
 
 # Infinity loop which can fix crush

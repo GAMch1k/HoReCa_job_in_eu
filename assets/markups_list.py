@@ -66,15 +66,22 @@ def get_editing_markup(lang):
     return edit_markup
 
 
-def get_main_menu_markup(lang):
+def get_main_menu_markup(lang, is_admin=False):
     lang = check_lang(lang)
-
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    if not is_admin:
+
+        markup.row(types.KeyboardButton(menu_create_vacation[lang]))
+        markup.row(types.KeyboardButton(manu_share_chanel[lang]))
+        markup.row(types.KeyboardButton(menu_support[lang]))
+        
+        return markup
+
     markup.row(types.KeyboardButton(menu_create_vacation[lang]))
-    markup.row(types.KeyboardButton(manu_share_chanel[lang]))
-    markup.row(types.KeyboardButton(menu_support[lang]))
-    
+    markup.row(types.KeyboardButton(admin_damp[lang]),
+               types.KeyboardButton(admin_mail[lang]))
     return markup
+    
 
 
 def generate_accept(post_id):
