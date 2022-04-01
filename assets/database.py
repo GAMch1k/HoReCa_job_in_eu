@@ -196,6 +196,20 @@ def new_user(user_id, language, is_admin=False):
         print(er)
 
 
+def get_all_users_id():
+    try:
+        # Creating cursor
+        cur = db.cursor()
+        if id:
+            # Getting data
+            cur.execute(f'''SELECT "user_id" from "users"''')
+            return cur.fetchall()
+
+    except sqlite3.Error as er:
+        print('GET USER\'S ID\'S ERROR')
+        print(er)
+
+
 def update_user_value(user_id, value, data):
     try:
         # Creating cursor
@@ -283,10 +297,10 @@ def init():
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "creator_id" INTEGER NOT NULL,
     "country" CHAR(30),
-    "city" CHAR(30),
-    "institution_type" CHAR(30),
-    "institution_name" CHAR(40),
-    "job_name" CHAR(30),
+    "city" CHAR(25),
+    "institution_type" CHAR(25),
+    "institution_name" CHAR(25),
+    "job_name" CHAR(25),
     "duties" CHAR(250),
     "requirements" CHAR(250),
     "job_conditions" CHAR(250),

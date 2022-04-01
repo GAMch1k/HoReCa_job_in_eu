@@ -4,7 +4,7 @@
 
 # Imports
 import telebot
-from assets import settings
+from assets.settings import *
 from assets.functions import get_full_post
 from assets.language_list import *
 from assets.markups_list import *
@@ -13,28 +13,20 @@ import cv2
 import os
 
 
-bot = telebot.TeleBot(settings.TOKEN)   # Initializing bot
+bot = telebot.TeleBot(TOKEN)   # Initializing bot
 
-MODERATORS_CHANEL = '@tests_for_my_bots_dont_matter'    # Chanel where moderators redacting posts
-FORWARD_TO = -1001279412171
+
+# @bot.message_handler(commands=['start'])
+# def welcome(message):
+#     send = bot.send_message(message.chat.id, welcome_message, reply_markup=start_markup)
+#     bot.register_next_step_handler(send, choose_lang)
 
 
 @bot.message_handler(commands=['start'])
-def welcome(message):
-    send = bot.send_message(message.chat.id, welcome_message, reply_markup=start_markup)
-    bot.register_next_step_handler(send, choose_lang)
-
-
-@bot.message_handler(content_types=['text'])
 def choose_lang(message):
-    bot.clear_step_handler_by_chat_id(message.chat.id)
-    if message.text == 'Старт / Start':
-        database.new_user(message.chat.id, 'ua')
-        send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
-        bot.register_next_step_handler(send, choose_lang_check)
-    else:
-        send = bot.send_message(message.chat.id, welcome_message, reply_markup=start_markup)
-        bot.register_next_step_handler(send, choose_lang)
+    database.new_user(message.chat.id, 'ua')
+    send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+    bot.register_next_step_handler(send, choose_lang_check)
 
 
 @bot.message_handler(content_types=['text'])
@@ -52,10 +44,32 @@ def choose_lang_check(message):
     else:
         send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
         bot.register_next_step_handler(send, choose_lang_check)
+        return
 
-    bot.send_message(message.chat.id, what_need_to_do[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_countrees_markup(database.get_user_lang(message.chat.id)))
-    # bot.register_next_step_handler(send, set_city)
-    
+    send = bot.send_message(message.chat.id, what_need_to_do[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_create_ad_markup(database.get_user_lang(message.chat.id)))
+    bot.register_next_step_handler(send, create_ad)
+
+
+@bot.message_handler(content_types=['text'])
+def create_ad(message):
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
+        else:
+            _not_found = True
+            for i in create_vacation_butt:
+                if i == message.text:
+                    _not_found = False
+                    bot.send_message(message.chat.id, starting_creating_vacation[check_lang(database.get_user_lang(message.chat.id))], reply_markup=empty)
+                    bot.send_message(message.chat.id, choose_one_countree_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_countrees_markup(database.get_user_lang(message.chat.id)))
+            if _not_found:
+                send = bot.send_message(message.chat.id, what_need_to_do[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_create_ad_markup(database.get_user_lang(message.chat.id)))
+                bot.register_next_step_handler(send, create_ad)
+    else:
+        send = bot.send_message(message.chat.id, what_need_to_do[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_create_ad_markup(database.get_user_lang(message.chat.id)))
+        bot.register_next_step_handler(send, create_ad)
+
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -64,11 +78,11 @@ def callback_query(call):
         bot.send_message(
             database.get_user_id_by_post_id(id),
             post_confirmed_message[check_lang(database.get_user_lang(call.from_user.id))])
-        
+        creator_id = int(database.get_post_data(0, 'creator_id', id))
         msg_id = database.get_post_data(0, 'mods_chat_id', id)
         # bot.forward_message(FORWARD_TO, MODERATORS_CHANEL, msg_id)
         bot.copy_message(FORWARD_TO, MODERATORS_CHANEL, msg_id, parse_mode='html')
-        bot.delete_message(MODERATORS_CHANEL, msg_id)
+        bot.edit_message_reply_markup(MODERATORS_CHANEL, msg_id, reply_markup=None)
         bot.answer_callback_query(call.id, "✅ Одобрено")
     except Exception as e:
         print(e)
@@ -77,197 +91,258 @@ def callback_query(call):
             database.new_post(call.from_user.id, call.data)
             bot.edit_message_text(chat_id=call.from_user.id, message_id=call.message.id, text=f'{you_choosed[check_lang(database.get_user_lang(call.from_user.id))]} {countrees_flags[callbacks_list.index(call.data)]} {countrees_list[callbacks_list.index(call.data)][check_lang(database.get_user_lang(call.from_user.id))]}')
             send = bot.send_message(call.from_user.id, choose_city[check_lang(database.get_user_lang(call.from_user.id))])
+            bot.answer_callback_query(call.id, call.data)
             bot.register_next_step_handler(send, set_city)
 
 
 @bot.message_handler(content_types=['text'])
 def set_city(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
-        database.update_post_value(message.chat.id, 'city', message.text)
-        if database.is_post_editing(message.chat.id):
-            print('EDITING POST!')
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
         else:
-            send = bot.send_message(message.chat.id, set_institytion_type_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, set_institytion_type)
+            database.update_post_value(message.chat.id, 'city', message.text)
+            if database.is_post_editing(message.chat.id):
+                print('EDITING POST!')
+            else:
+                send = bot.send_message(message.chat.id, set_institytion_type_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, set_institytion_type)
+    else:
+        send = bot.send_message(message.chat.id, choose_city[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, set_city)
 
 
 @bot.message_handler(content_types=['text'])
 def set_institytion_type(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
-        database.update_post_value(message.chat.id, 'institution_type', message.text)
-        if database.is_post_editing(message.chat.id):
-            send = bot.send_message(message.chat.id, set_institytion_name_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, set_institytion_name)
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
         else:
-            send = bot.send_message(message.chat.id, set_institytion_name_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, set_institytion_name)
+            database.update_post_value(message.chat.id, 'institution_type', message.text)
+            if database.is_post_editing(message.chat.id):
+                send = bot.send_message(message.chat.id, set_institytion_name_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, set_institytion_name)
+            else:
+                send = bot.send_message(message.chat.id, set_institytion_name_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, set_institytion_name)
+    else:
+        send = bot.send_message(message.chat.id, set_institytion_type_lang[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, set_institytion_type)
 
 
 @bot.message_handler(content_types=['text'])
 def set_institytion_name(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
-        database.update_post_value(message.chat.id, 'institution_name', message.text)
-        if database.is_post_editing(message.chat.id):
-            img_id = database.get_post_id(message.chat.id)
-            bot.send_photo(message.chat.id,
-                photo=open(f'assets/images/{img_id}.jpg', 'rb'),
-                caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
-                parse_mode='html')
-            
-            send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
-
-            database.update_post_value(message.chat.id, 'editing', True)
-            bot.register_next_step_handler(send, editing_post)
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
         else:
-            send = bot.send_message(message.chat.id, vacation_name[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, set_vacation_name)
+            database.update_post_value(message.chat.id, 'institution_name', message.text)
+            if database.is_post_editing(message.chat.id):
+                img_id = database.get_post_id(message.chat.id)
+                bot.send_photo(message.chat.id,
+                    photo=open(f'assets/images/{img_id}.jpg', 'rb'),
+                    caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
+                    parse_mode='html')
+                
+                send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
+
+                database.update_post_value(message.chat.id, 'editing', True)
+                bot.register_next_step_handler(send, editing_post)
+            else:
+                send = bot.send_message(message.chat.id, vacation_name[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, set_vacation_name)
+    else:
+        send = bot.send_message(message.chat.id, set_institytion_name_lang[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, set_institytion_name)
 
 
 @bot.message_handler(content_types=['text'])
 def set_vacation_name(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
-        database.update_post_value(message.chat.id, 'job_name', message.text)
-        if database.is_post_editing(message.chat.id):
-            img_id = database.get_post_id(message.chat.id)
-            bot.send_photo(message.chat.id,
-                photo=open(f'assets/images/{img_id}.jpg', 'rb'),
-                caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
-                parse_mode='html')
-            
-            send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
-
-            database.update_post_value(message.chat.id, 'editing', True)
-            bot.register_next_step_handler(send, editing_post)
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
         else:
-            send = bot.send_message(message.chat.id, duties_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, set_duties)
+            database.update_post_value(message.chat.id, 'job_name', message.text)
+            if database.is_post_editing(message.chat.id):
+                img_id = database.get_post_id(message.chat.id)
+                bot.send_photo(message.chat.id,
+                    photo=open(f'assets/images/{img_id}.jpg', 'rb'),
+                    caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
+                    parse_mode='html')
+                
+                send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
+
+                database.update_post_value(message.chat.id, 'editing', True)
+                bot.register_next_step_handler(send, editing_post)
+            else:
+                send = bot.send_message(message.chat.id, duties_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, set_duties)
+    else:
+        send = bot.send_message(message.chat.id, vacation_name[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, set_vacation_name)
 
 
 @bot.message_handler(content_types=['text'])
 def set_duties(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
-        database.update_post_value(message.chat.id, 'duties', message.text)
-        if database.is_post_editing(message.chat.id):
-            img_id = database.get_post_id(message.chat.id)
-            bot.send_photo(message.chat.id,
-                photo=open(f'assets/images/{img_id}.jpg', 'rb'),
-                caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
-                parse_mode='html')
-            
-            send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
-
-            database.update_post_value(message.chat.id, 'editing', True)
-            bot.register_next_step_handler(send, editing_post)
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
         else:
-            send = bot.send_message(message.chat.id, requirements_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, set_requirements)
+            database.update_post_value(message.chat.id, 'duties', message.text)
+            if database.is_post_editing(message.chat.id):
+                img_id = database.get_post_id(message.chat.id)
+                bot.send_photo(message.chat.id,
+                    photo=open(f'assets/images/{img_id}.jpg', 'rb'),
+                    caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
+                    parse_mode='html')
+                
+                send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
+
+                database.update_post_value(message.chat.id, 'editing', True)
+                bot.register_next_step_handler(send, editing_post)
+            else:
+                send = bot.send_message(message.chat.id, requirements_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, set_requirements)
+    else:
+        send = bot.send_message(message.chat.id, duties_lang[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, set_duties)
 
 
 @bot.message_handler(content_types=['text'])
 def set_requirements(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
-        database.update_post_value(message.chat.id, 'requirements', message.text)
-        if database.is_post_editing(message.chat.id):
-            img_id = database.get_post_id(message.chat.id)
-            bot.send_photo(message.chat.id,
-                photo=open(f'assets/images/{img_id}.jpg', 'rb'),
-                caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
-                parse_mode='html')
-            
-            send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
-
-            database.update_post_value(message.chat.id, 'editing', True)
-            bot.register_next_step_handler(send, editing_post)
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
         else:
-            send = bot.send_message(message.chat.id, job_conditions_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, set_job_conditions)
+            database.update_post_value(message.chat.id, 'requirements', message.text)
+            if database.is_post_editing(message.chat.id):
+                img_id = database.get_post_id(message.chat.id)
+                bot.send_photo(message.chat.id,
+                    photo=open(f'assets/images/{img_id}.jpg', 'rb'),
+                    caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
+                    parse_mode='html')
+                
+                send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
+
+                database.update_post_value(message.chat.id, 'editing', True)
+                bot.register_next_step_handler(send, editing_post)
+            else:
+                send = bot.send_message(message.chat.id, job_conditions_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, set_job_conditions)
+    else:
+        send = bot.send_message(message.chat.id, requirements_lang[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, set_requirements)
 
 
 @bot.message_handler(content_types=['text'])
 def set_job_conditions(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
-        database.update_post_value(message.chat.id, 'job_conditions', message.text)
-        if database.is_post_editing(message.chat.id):
-            img_id = database.get_post_id(message.chat.id)
-            bot.send_photo(message.chat.id,
-                photo=open(f'assets/images/{img_id}.jpg', 'rb'),
-                caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
-                parse_mode='html')
-            
-            send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
-
-            database.update_post_value(message.chat.id, 'editing', True)
-            bot.register_next_step_handler(send, editing_post)
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
         else:
-            send = bot.send_message(message.chat.id, contact_info_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, set_contact_info)
+            database.update_post_value(message.chat.id, 'job_conditions', message.text)
+            if database.is_post_editing(message.chat.id):
+                img_id = database.get_post_id(message.chat.id)
+                bot.send_photo(message.chat.id,
+                    photo=open(f'assets/images/{img_id}.jpg', 'rb'),
+                    caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
+                    parse_mode='html')
+                
+                send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
+
+                database.update_post_value(message.chat.id, 'editing', True)
+                bot.register_next_step_handler(send, editing_post)
+            else:
+                send = bot.send_message(message.chat.id, contact_info_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, set_contact_info)
+    else:
+        send = bot.send_message(message.chat.id, job_conditions_lang[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, set_job_conditions)
 
 
 @bot.message_handler(content_types=['text'])
 def set_contact_info(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
-        database.update_post_value(message.chat.id, 'contact_info', message.text)
-        database.update_user_value(message.chat.id, 'contact_info', message.text)
-        if database.is_post_editing(message.chat.id):
-            img_id = database.get_post_id(message.chat.id)
-            bot.send_photo(message.chat.id,
-                photo=open(f'assets/images/{img_id}.jpg', 'rb'),
-                caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
-                parse_mode='html')
-            
-            send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
-
-            database.update_post_value(message.chat.id, 'editing', True)
-            bot.register_next_step_handler(send, editing_post)
+    if(message.text != '' and message.text != None):
+        if message.text == '/start':
+            send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+            bot.register_next_step_handler(send, choose_lang_check)
         else:
-            send = bot.send_message(message.chat.id, send_photo_lang[check_lang(database.get_user_lang(message.chat.id))])
-            bot.register_next_step_handler(send, download_photo)
+            database.update_post_value(message.chat.id, 'contact_info', message.text)
+            database.update_user_value(message.chat.id, 'contact_info', message.text)
+            if database.is_post_editing(message.chat.id):
+                img_id = database.get_post_id(message.chat.id)
+                bot.send_photo(message.chat.id,
+                    photo=open(f'assets/images/{img_id}.jpg', 'rb'),
+                    caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
+                    parse_mode='html')
+                
+                send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
+
+                database.update_post_value(message.chat.id, 'editing', True)
+                bot.register_next_step_handler(send, editing_post)
+            else:
+                send = bot.send_message(message.chat.id, send_photo_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, download_photo)
+    else:
+        send = bot.send_message(message.chat.id, contact_info_lang[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, set_contact_info)
 
 
 @bot.message_handler(content_types=['photo'])
 def download_photo(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    try:
-        fileID = message.photo[-1].file_id
-        file_info = bot.get_file(fileID)
-        downloaded_file = bot.download_file(file_info.file_path)
+    if message.text == '/start':
+        send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+        bot.register_next_step_handler(send, choose_lang_check)
+    else:
+        try:
+            fileID = message.photo[-1].file_id
+            file_info = bot.get_file(fileID)
+            downloaded_file = bot.download_file(file_info.file_path)
 
-        img_id = database.get_post_id(message.chat.id)
-        with open(f'assets/images/{img_id}.jpg', 'wb') as f:
-            f.write(downloaded_file)
-        height, width, c = cv2.imread(f'assets/images/{img_id}.jpg').shape
-        if width >= height:
-            bot.send_photo(message.chat.id,
-                photo=open(f'assets/images/{img_id}.jpg', 'rb'),
-                caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
-                parse_mode='html')
-            
-            send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
+            img_id = database.get_post_id(message.chat.id)
+            with open(f'assets/images/{img_id}.jpg', 'wb') as f:
+                f.write(downloaded_file)
+            height, width, c = cv2.imread(f'assets/images/{img_id}.jpg').shape
+            if width >= height:
+                bot.send_photo(message.chat.id,
+                    photo=open(f'assets/images/{img_id}.jpg', 'rb'),
+                    caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
+                    parse_mode='html')
+                
+                send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
 
-            database.update_post_value(message.chat.id, 'editing', True)
-            bot.register_next_step_handler(send, editing_post)
-        else:
+                database.update_post_value(message.chat.id, 'editing', True)
+                bot.register_next_step_handler(send, editing_post)
+            else:
+                send = bot.send_message(message.chat.id, send_photo_lang[check_lang(database.get_user_lang(message.chat.id))])
+                bot.register_next_step_handler(send, download_photo)
+
+        except Exception as e:
+            print(e)
             send = bot.send_message(message.chat.id, send_photo_lang[check_lang(database.get_user_lang(message.chat.id))])
             bot.register_next_step_handler(send, download_photo)
-
-    except Exception as e:
-        print(e)
-        send = bot.send_message(message.chat.id, send_photo_lang[check_lang(database.get_user_lang(message.chat.id))])
-        bot.register_next_step_handler(send, download_photo)
 
 
 @bot.message_handler(content_types=['text'])
 def editing_post(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
+    if(message.text != '' and message.text != None):
         _not_found = True
         for i in edit_info_company:
             if message.text == i:
@@ -317,6 +392,7 @@ def editing_post(message):
             if message.text == i:
                 _not_found = False
                 img_id = database.get_post_id(message.chat.id)
+                bot.send_message(MODERATORS_CHANEL, f'message.chat.username')
                 mod = bot.send_photo(MODERATORS_CHANEL,
                     photo=open(f'assets/images/{img_id}.jpg', 'rb'),
                     caption=f'{get_full_post(message.chat.id, check_lang(database.get_user_lang(message.chat.id)))}',
@@ -336,7 +412,9 @@ def editing_post(message):
             send = bot.send_message(message.chat.id, edit_label_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_editing_markup(database.get_user_lang(message.chat.id)))
 
             bot.register_next_step_handler(send, editing_post)
-
+    elif message.text == '/start':
+        send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+        bot.register_next_step_handler(send, choose_lang_check)
     else:
         img_id = database.get_post_id(message.chat.id)
         bot.send_photo(message.chat.id,
@@ -352,7 +430,7 @@ def editing_post(message):
 @bot.message_handler(content_types=['text'])
 def main_menu(message):
     bot.clear_step_handler_by_chat_id(message.chat.id)
-    if(message.text != ''):
+    if(message.text != '' and message.text != None):
         _not_found = True
         for i in menu_create_vacation:
             if message.text == i:
@@ -362,7 +440,7 @@ def main_menu(message):
         for i in manu_share_chanel:
             if message.text == i:
                 _not_found = False
-                send = bot.send_message(message.chat.id, share_chanel_lang[check_lang(database.get_user_lang(message.chat.id))])
+                send = bot.send_message(message.chat.id, share_chanel_lang[check_lang(database.get_user_lang(message.chat.id))], parse_mode='html', reply_markup=get_share_markup(database.get_user_lang(message.chat.id)))
                 bot.register_next_step_handler(send, main_menu)
         for i in menu_support:
             if message.text == i:
@@ -379,9 +457,43 @@ def main_menu(message):
         for i in admin_mail:
             if message.text == i:
                 _not_found = False
+                send = bot.send_message(message.chat.id, admin_message_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_back_markup(database.get_user_lang(message.chat.id)))
+                bot.register_next_step_handler(send, send_message_to_users)
         if _not_found:
-            pass
+            send = bot.send_message(message.chat.id, no_answer[check_lang(database.get_user_lang(message.chat.id))])
+            bot.register_next_step_handler(send, main_menu)
+    elif message.text == '/start':
+        send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+        bot.register_next_step_handler(send, choose_lang_check)
+    else:
+        send = bot.send_message(message.chat.id, no_answer[check_lang(database.get_user_lang(message.chat.id))])
+        bot.register_next_step_handler(send, main_menu)
 
+
+@bot.message_handler(content_types=['text'])
+def send_message_to_users(message):
+    if message.text != '' and message.text != None:
+        _not_found = True
+        for i in back_btn:
+            if message.text == i:
+                _not_found = False
+                send = bot.send_message(message.chat.id, back_btn[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_main_menu_markup(database.get_user_lang(message.chat.id), database.is_user_admin(message.chat.id)))
+                bot.register_next_step_handler(send, main_menu)
+        if _not_found:
+            for i in database.get_all_users_id():
+                try:
+                    bot.send_message(int(i[0]), message.text)
+                except:
+                    continue
+            send = bot.send_message(message.chat.id, message_was_sended[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_main_menu_markup(database.get_user_lang(message.chat.id), database.is_user_admin(message.chat.id)))
+            bot.register_next_step_handler(send, main_menu)
+    elif message.text == '/start':
+        send = bot.send_message(message.chat.id, choose_language, reply_markup=choose_lang_marukp)
+        bot.register_next_step_handler(send, choose_lang_check)
+    else:
+        send = bot.send_message(message.chat.id, admin_message_lang[check_lang(database.get_user_lang(message.chat.id))], reply_markup=get_back_markup(database.get_user_lang(message.chat.id)))
+        bot.register_next_step_handler(send, send_message_to_users)
+        
 
 # Infinity loop which can fix crush
 # while True:
@@ -390,4 +502,4 @@ def main_menu(message):
 #     except:
 #         continue
 
-bot.infinity_polling()
+bot.infinity_polling(timeout=123)

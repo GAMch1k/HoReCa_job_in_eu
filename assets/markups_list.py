@@ -22,6 +22,15 @@ en_btn = types.KeyboardButton('English')
 ru_btn = types.KeyboardButton('Русский')
 choose_lang_marukp.add(ua_btn, en_btn, ru_btn)
 
+
+def get_create_ad_markup(lang):
+    lang = check_lang(lang)
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(types.KeyboardButton(create_vacation_butt[lang]))
+    return markup
+
+
 def get_countrees_markup(lang):
     lang = check_lang(lang)
 
@@ -88,3 +97,20 @@ def generate_accept(post_id):
     accept = types.InlineKeyboardMarkup()
     accept.row(types.InlineKeyboardButton(text='✅ Одобрить', callback_data=f'{post_id}'))
     return accept
+
+
+def get_back_markup(lang):
+    lang = check_lang(lang)
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(types.KeyboardButton(back_btn[lang]))
+    return markup
+
+
+def get_share_markup(lang):
+    lang = check_lang(lang)
+    markup = types.InlineKeyboardMarkup()
+    markup.row(
+        types.InlineKeyboardButton(text=go_to_site_lang[lang], url='https://gamch1k-website.herokuapp.com/'),
+        types.InlineKeyboardButton(text=share_chanel_button[lang], switch_inline_query=share_chanel_lang[lang])
+    )
+    return markup
