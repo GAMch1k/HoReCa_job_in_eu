@@ -2,6 +2,31 @@
 from assets import database as db
 from assets.language_list import *
 
+from telegraph import Telegraph
+from bs4 import BeautifulSoup as bs
+import requests
+import os
+
+telegraph = Telegraph()
+telegraph.create_account(short_name='1234')
+
+def get_image_telegraph(img_id):
+    with open(f'assets/images/{img_id}.jpg', 'rb') as f:
+        path = requests.post('https://telegra.ph/upload', files={'file': ('file', f, 'image/jpg')}).json()[0]['src']
+    response = telegraph.create_page('HoReCa', html_content=f'<img src=\'{path}\'/>')
+
+    link = response['url']
+    req = requests.get(link)
+
+    data = bs(req.text, 'html.parser')
+    img = data.find_all('img', src=True)
+
+    img_src = [x['src'] for x in img]
+    # os.remove(f'assets/images/{img_id}.jpg')
+    # print('https://telegra.ph' + img_src[0])
+    return 'https://telegra.ph' + img_src[0]
+
+
 
 def data_beautify_bd(data):
     if isinstance(data, str):
@@ -16,9 +41,8 @@ def get_full_post(usr_id, lang, post_id=None):
 
         if lang == 0:  # ua
             return f'''
-{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
-{db.get_post_data(usr_id, 'institution_type')} «{db.get_post_data(usr_id, 'institution_name')}»
-
+<a href='{get_image_telegraph(db.get_post_data(usr_id, 'id'))}'>{countrees_flags[callbacks_list.index(_country)]}</a> #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
+{db.get_post_data(usr_id, 'institution_type').title()} «{db.get_post_data(usr_id, 'institution_name').title()}»
 
 》<b>{db.get_post_data(usr_id, 'job_name').title()}</b>
 
@@ -37,8 +61,8 @@ def get_full_post(usr_id, lang, post_id=None):
 
         if lang == 1:  # en
             return f'''
-{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
-{db.get_post_data(usr_id, 'institution_type')} «{db.get_post_data(usr_id, 'institution_name')}»
+<a href='{get_image_telegraph(db.get_post_data(usr_id, 'id'))}'>{countrees_flags[callbacks_list.index(_country)]}</a> #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
+{db.get_post_data(usr_id, 'institution_type').title()} «{db.get_post_data(usr_id, 'institution_name').title()}»
 
 》<b>{db.get_post_data(usr_id, 'job_name').title()}</b>
 
@@ -57,8 +81,8 @@ Contact information:
 
         if lang == 2:  # ru
             return f'''
-{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
-{db.get_post_data(usr_id, 'institution_type')} {db.get_post_data(usr_id, 'institution_name')}
+<a href='{get_image_telegraph(db.get_post_data(usr_id, 'id'))}'>{countrees_flags[callbacks_list.index(_country)]}</a> #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
+{db.get_post_data(usr_id, 'institution_type').title()} «{db.get_post_data(usr_id, 'institution_name').title()}»
 
 》<b>{db.get_post_data(usr_id, 'job_name').title()}</b>
 
@@ -81,9 +105,8 @@ Contact information:
 
         if lang == 0:  # ua
             return f'''
-{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
-{db.get_post_data(usr_id, 'institution_type', post_id)} «{db.get_post_data(usr_id, 'institution_name'), post_id}»
-
+<a href='{get_image_telegraph(post_id)}'>{countrees_flags[callbacks_list.index(_country)]}</a> #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
+{db.get_post_data(usr_id, 'institution_type', post_id).title()} «{db.get_post_data(usr_id, 'institution_name', post_id).title()}»
 
 》<b>{db.get_post_data(usr_id, 'job_name', post_id).title()}</b>
 
@@ -102,8 +125,8 @@ Contact information:
 
         if lang == 1:  # en
             return f'''
-{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
-{db.get_post_data(usr_id, 'institution_type', post_id)} «{db.get_post_data(usr_id, 'institution_name', post_id)}»
+<a href='{get_image_telegraph(post_id)}'>{countrees_flags[callbacks_list.index(_country)]}</a> #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
+{db.get_post_data(usr_id, 'institution_type', post_id).title()} «{db.get_post_data(usr_id, 'institution_name', post_id).title()}»
 
 》<b>{db.get_post_data(usr_id, 'job_name', post_id).title()}</b>
 
@@ -122,8 +145,8 @@ Contact information:
 
         if lang == 2:  # ru
             return f'''
-{countrees_flags[callbacks_list.index(_country)]} #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
-{db.get_post_data(usr_id, 'institution_type', post_id)} {db.get_post_data(usr_id, 'institution_name', post_id)}
+<a href='{get_image_telegraph(post_id)}'>{countrees_flags[callbacks_list.index(_country)]}</a> #{countrees_list[callbacks_list.index(_country)][check_lang(db.get_user_lang(usr_id))].replace(' ', '_')}, #{_city}
+{db.get_post_data(usr_id, 'institution_type', post_id).title()} «{db.get_post_data(usr_id, 'institution_name', post_id).title()}»
 
 》<b>{db.get_post_data(usr_id, 'job_name', post_id).title()}</b>
 

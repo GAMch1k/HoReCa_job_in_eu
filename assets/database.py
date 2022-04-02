@@ -186,7 +186,9 @@ def new_user(user_id, language, is_admin=False):
             {user_id},
             "{language}",
             {is_admin},
-            "{''}"
+            "",
+            "",
+            ""
         )''')
 
         db.commit()
@@ -291,8 +293,10 @@ def init():
     "user_id" INTEGER PRIMARY KEY,
     "lang" CHAR(2) NOT NULL,
     "is_admin" BOOLEAN NOT NULL,
-    "contact_info" CHAR(100))
-    ''')
+    "contact_info" CHAR(100),
+    "country" CHAR(30),
+    "city" CHAR(25)
+    )''')
     cur.execute('''CREATE TABLE if not exists "posts" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "creator_id" INTEGER NOT NULL,

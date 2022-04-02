@@ -47,6 +47,18 @@ def get_countrees_markup(lang):
     return countrees_markup
 
 
+def get_contacts_markup(usr_name, lang):
+    lang = check_lang(lang)
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+
+    markup.add(
+        types.KeyboardButton(share_phone_butt[lang], request_contact=True),
+        types.KeyboardButton(text=f'@{usr_name}')
+    )
+    return markup
+
+
 def get_editing_markup(lang):
     lang = check_lang(lang)
 
@@ -67,11 +79,10 @@ def get_editing_markup(lang):
         types.KeyboardButton(edit_contacts[lang])
     )
     edit_markup.row(
-        types.KeyboardButton(edit_empty_vacation[lang])
-    )
-    edit_markup.row(
+        types.KeyboardButton(edit_empty_vacation[lang]),
         types.KeyboardButton(edit_accept[lang])
     )
+
     return edit_markup
 
 
@@ -110,7 +121,7 @@ def get_share_markup(lang):
     lang = check_lang(lang)
     markup = types.InlineKeyboardMarkup()
     markup.row(
-        types.InlineKeyboardButton(text=go_to_site_lang[lang], url='https://gamch1k-website.herokuapp.com/'),
-        types.InlineKeyboardButton(text=share_chanel_button[lang], switch_inline_query=share_chanel_lang[lang])
+        # types.InlineKeyboardButton(text=go_to_site_lang[lang], url='https://gamch1k-website.herokuapp.com/'),
+        types.InlineKeyboardButton(text=manu_share_chanel[lang], url='https://t.me/share/url?url=https%3A%2F%2Ft.me%2Fc%2F1649738552%2F16') # switch_inline_query=share_chanel_lang[lang])
     )
     return markup
